@@ -5,7 +5,11 @@ import java.security.MessageDigest;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.Signature;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
+
+import com.sun.xml.internal.ws.util.StringUtils;
 
 public class StringUtil {
 //Applies ECDSA Signature and returns the result ( as bytes ).
@@ -56,8 +60,36 @@ public class StringUtil {
 		}
 	}
 
+	//Tacks in array of transactions and returns a merkle root.
+	// In our case will be used for promptly searching through a HashStructure ?
+	public static String getMerkleRoot(ArrayList<Transaction> transactions) {
+			int count = transactions.size();
+			ArrayList<String> previousTreeLayer = new ArrayList<String>();
+			for(Transaction transaction : transactions) {
+				previousTreeLayer.add(transaction.transactionId);
+			}
+			ArrayList<String> treeLayer = previousTreeLayer;
+			while(count > 1) {
+				treeLayer = new ArrayList<String>();
+				for(int i=1; i < previousTreeLayer.size(); i++) {
+					treeLayer.add(applySha256(previousTreeLayer.get(i-1) + previousTreeLayer.get(i)));
+				}
+				count = treeLayer.size();
+				previousTreeLayer = treeLayer;
+			}
+			String merkleRoot = (treeLayer.size() == 1) ? treeLayer.get(0) : "";
+			return merkleRoot;
+		}
+
 	// getStringFromKey returns encoded string from any key.
 	public static String getStringFromKey(Key key) {
 		return Base64.getEncoder().encodeToString(key.getEncoded());
+	}
+
+	public static String getDifficultyString(int difficulty) {
+		char[] chars = new char[difficulty];
+		Arrays.fill(chars, '0');
+		String rtn = new String(chars);
+		return rtn;
 	}
 }
